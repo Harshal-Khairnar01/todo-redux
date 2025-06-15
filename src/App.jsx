@@ -7,8 +7,11 @@ import {
   deleteTodo,
   toggleComplete,
   updateTodo,
+  undoDelete,
 } from "./slices/todoSlice";
 import { v4 as uuid } from "uuid";
+
+import { useRef } from "react";
 
 import { FaEdit } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
@@ -20,6 +23,8 @@ export default function App() {
   const [isUpdate, setIsUpdate] = useState(false);
   const [updateId, setUpdateId] = useState(null);
   const dispatch = useDispatch();
+
+  const undoToastRef = useRef(null);
 
   const { todos } = useSelector((state) => state.todos);
 
@@ -46,7 +51,33 @@ export default function App() {
 
   const onDeleteTodo = (id) => {
     dispatch(deleteTodo(id));
-    toast.error("Task deleted successfully!");
+
+    if (undoToastRef.current) {
+      toast.dismiss(undoToastRef.current);
+    }
+
+    const toastId = toast.error(
+      (t) => (
+        <span className=" flex items-center gap-4">
+          Task Deleted Successfully
+          <button
+            className=" bg-green-500 p-2 rounded-md"
+            onClick={() => {
+              dispatch(undoDelete());
+              toast.dismiss(t.id);
+              toast.success("Undo successfull!");
+              undoToastRef.current = null;
+            }}
+          >
+            Undo
+          </button>
+        </span>
+      ),
+      {
+        duration: 4000,
+      }
+    );
+    undoToastRef.current = toastId;
   };
 
   const onUpdateTodo = (todo) => {
@@ -81,7 +112,9 @@ export default function App() {
           className="p-2 bg-transparent border-b-2 outline-none border-pink-500 text-purple-900"
         />
         <button
-          className={`${ isUpdate?"bg-green-500":"bg-pink-600"}  text-white  shadow-md py-1 px-5 rounded-md  ${
+          className={`${
+            isUpdate ? "bg-green-500" : "bg-pink-600"
+          }  text-white  shadow-md py-1 px-5 rounded-md  ${
             inputText.trim() === "" ? "cursor-not-allowed" : " cursor-pointer"
           }`}
           onClick={onAddClick}
@@ -103,7 +136,11 @@ export default function App() {
                   onChange={(e) => onToggleComplete(e.target.checked, todo.id)}
                   className=" translate-y-0.5"
                 />
-                <span className={`${todo.complete ? "line-through" : ""}  text-rose-900 text-lg`}>
+                <span
+                  className={`${
+                    todo.complete ? "line-through" : ""
+                  }  text-rose-900 text-lg`}
+                >
                   {" "}
                   {todo.todo}
                 </span>
