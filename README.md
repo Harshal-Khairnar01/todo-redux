@@ -1,4 +1,4 @@
-# Next Do: What's next? Do it! 
+# Next Do: What's next? Do it!
 
 A feature-rich todo application built with React and Redux Toolkit, featuring local storage persistence and complete todo management capabilities.
 
@@ -28,6 +28,7 @@ src/
 ### Core Components
 
 #### Store Configuration (store/index.js)
+
 - Configures Redux store
 - Implements localStorage persistence
 - Sets up store subscribers
@@ -35,13 +36,15 @@ src/
 ```javascript
 const store = configureStore({
   reducer: {
-    todos: todoReducer
-  }
+    todos: todoReducer,
+  },
 });
 ```
 
 #### Todo Slice (slices/todoSlice.js)
+
 Manages todo state with the following actions:
+
 - `addTodo`: Creates new todos
 - `deleteTodo`: Removes todos
 - `updateTodo`: Modifies existing todos
@@ -93,42 +96,95 @@ const saveToLocalStorage = (state) => {
 
 ```javascript
 // Add Todo
-dispatch(addTodo({
-  id: uniqueId,
-  todo: "New Todo",
-  complete: false
-}));
+dispatch(
+  addTodo({
+    id: uniqueId,
+    todo: "New Todo",
+    complete: false,
+  })
+);
 
 // Update Todo
-dispatch(updateTodo({
-  id: existingId,
-  todos: "Updated Todo"
-}));
+dispatch(
+  updateTodo({
+    id: existingId,
+    todos: "Updated Todo",
+  })
+);
 
 // Toggle Complete
-dispatch(toggleComplete({
-  id: todoId,
-  complete: true
-}));
+dispatch(
+  toggleComplete({
+    id: todoId,
+    complete: true,
+  })
+);
 
-// Delete Todo
+// Delete Todo with Undo Support
 dispatch(deleteTodo(todoId));
+
+// Undo Delete
+dispatch(undoDelete());
+```
+
+### 3. Undo Feature Implementation
+
+The application includes an undo feature for deleted todos. When a todo is deleted, users have a brief window to undo the deletion.
+
+#### How it works:
+
+1. **State Structure**: The Redux store maintains a `lastDeleted` state that stores:
+
+   ```javascript
+   lastDeleted: {
+     todo: {/* deleted todo object */},
+     index: number // original position
+   }
+   ```
+
+2. **Delete Operation**:
+
+   - When a todo is deleted, it's stored in `lastDeleted` before removal
+   - A toast notification appears with an "Undo" button
+   - The user has 4 seconds to undo the deletion
+
+3. **Undo Operation**:
+   - Clicking "Undo" restores the todo to its original position
+   - The `lastDeleted` state is cleared after restoration
+   - A success message confirms the undo action
+
+#### Code Example:
+
+```javascript
+// Delete with undo support
+const onDeleteTodo = (id) => {
+  dispatch(deleteTodo(id));
+  toast((t) => (
+    <span>
+      Task Deleted Successfully
+      <button onClick={() => dispatch(undoDelete())}>Undo</button>
+    </span>
+  ));
+};
 ```
 
 ## Getting Started
 
 1. Clone the repository
+
 ```bash
 git clone [repository-url]
 ```
 
 2. Install dependencies
+
 ```bash
 cd todo-app-redux
 npm install
 ```
 
 3. Start the development server
+
 ```bash
 npm run dev
 ```

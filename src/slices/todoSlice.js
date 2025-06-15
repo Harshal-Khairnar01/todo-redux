@@ -11,7 +11,8 @@ const loadFromLocalStorage = () => {
 };
 
 const initialState = {
-   todos: loadFromLocalStorage(),
+  todos: loadFromLocalStorage(),
+  lastDeleted: null,
 };
 
 const todoSlice = createSlice({
@@ -23,7 +24,19 @@ const todoSlice = createSlice({
       //   state.todos = [...state.todos, action.payload];
     },
     deleteTodo: (state, action) => {
-      state.todos = state.todos.filter((todo) => todo.id !== action.payload);
+      const index = state.todos.findIndex((todo) => todo.id === action.payload);
+      const deleted = state.todos[index];
+      if (deleted) {
+        state.lastDeleted = { todo: deleted, index };
+        state.todos = state.todos.filter((todo) => todo.id !== action.payload);
+      }
+    },
+    undoDelete: (state) => {
+      if (state.lastDeleted) {
+        const { todo, index } = state.lastDeleted;
+        state.todos.splice(index, 0, todo);
+        state.lastDeleted = null;
+      }
     },
     updateTodo: (state, action) => {
       const { id, todos } = action.payload;
@@ -42,6 +55,6 @@ const todoSlice = createSlice({
   },
 });
 
-export const { addTodo, deleteTodo, updateTodo, toggleComplete } =
+export const { addTodo, deleteTodo, updateTodo, toggleComplete, undoDelete } =
   todoSlice.actions;
 export default todoSlice.reducer;
